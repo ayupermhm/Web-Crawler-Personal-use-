@@ -39,12 +39,19 @@ def output():
     df.to_csv(f'{file_name}.csv', index = False) #change file name accordingly, do not remove the .csv
     print('Saved to CSV')
 
-def generate_search_link(search_terms, start_date, end_date):
-    base_url = 'https://www.foodnavigator-asia.com/search?q={query}&t=all&p=1&sd={sd}&ed={ed}&ob=date&range_date=custom_dates'
+def generate_search_link(search_terms, start_date = None, end_date = None):
+    if start_date and end_date:
+        base_url = 'https://www.foodnavigator-asia.com/search?q={query}&t=all&p=1&sd={sd}&ed={ed}&ob=date&range_date=custom_dates'
+        start_date = int(time.mktime(start_date.timetuple()))
+        end_date = int(time.mktime(end_date.timetuple()))
+    else: 
+        base_url = 'https://www.foodnavigator-asia.com/search?q={query}&t=all&p=1&ob=date&range_date=all'
+    
     query = "%20".join(search_terms)
-    start_date = int(time.mktime(start_date.timetuple()))
-    end_date = int(time.mktime(end_date.timetuple()))
-    link = base_url.format(query = query, sd = start_date, ed = end_date)
+    if start_date and end_date: 
+        link = base_url.format(query = query, sd = start_date, ed = end_date)
+    else:
+        link = base_url.format(query = query)
     print(link)
     return link
 
@@ -54,8 +61,11 @@ end_date_input = input("Enter end date (YYYY-MM-DD 01:00): ")
 pages = input("Enter Number of Pages you would like to search: ")
 file_name = input("Enter a file name: ")
 
-start_date = datetime.datetime.strptime(start_date_input, "%Y-%m-%d %H:%M")
-end_date = datetime.datetime.strptime(end_date_input, "%Y-%m-%d %H:%M")
+start_date = None
+end_date = None
+if start_date_input and end_date_input:
+    start_date = datetime.datetime.strptime(start_date_input, "%Y-%m-%d %H:%M")
+    end_date = datetime.datetime.strptime(end_date_input, "%Y-%m-%d %H:%M")
 
 while True:
     try:
