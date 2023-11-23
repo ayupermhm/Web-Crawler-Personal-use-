@@ -36,7 +36,7 @@ def parse(products):
         
 def output():
     df = pd.DataFrame(links_list)
-    df.to_csv('pf1.csv', index = False) #change file name accordingly, do not remove the .csv
+    df.to_csv(f'{file_name}.csv', index = False) #change file name accordingly, do not remove the .csv
     print('Saved to CSV')
 
 def generate_search_link(search_terms, start_date, end_date):
@@ -48,21 +48,25 @@ def generate_search_link(search_terms, start_date, end_date):
     print(link)
     return link
 
-x = 1
-search_terms = ["precision", "fermentation"] #change words according to what you want to search
-start_date = datetime.datetime(2023, 10, 1, 1, 00) #Year, Month,Day ,Hour ,Min -> only change year month date
-end_date = datetime.datetime(2023, 11, 3, 1, 00) #Year, Month,Day ,Hour ,Min -> only change year month date
+search_terms = input("Enter the search terms separated by spaces: ").split()
+start_date_input = input("Enter start date (YYYY-MM-DD 01:00): ")
+end_date_input = input("Enter end date (YYYY-MM-DD 01:00): ")
+pages = input("Enter Number of Pages you would like to search: ")
+file_name = input("Enter a file name: ")
+
+start_date = datetime.datetime.strptime(start_date_input, "%Y-%m-%d %H:%M")
+end_date = datetime.datetime.strptime(end_date_input, "%Y-%m-%d %H:%M")
 
 while True:
     try:
         products = request(generate_search_link(search_terms, start_date, end_date)) #insert the link that you want to view, shift the x accordingly 
-        print(f'Getting links from page {x}')
+        print(f'Getting links from page {pages}')
         parse(products)
         print('Total Items: ', len(links_list))
-        x = x+1
+        pages += 1
         time.sleep(2)
 
-        if x == 1 or len(links_list) == 0: #Change the maximum number of pages accordingly 
+        if not pages == pages or not links_list: #Change the maximum number of pages accordingly 
             break
 
     except: 
