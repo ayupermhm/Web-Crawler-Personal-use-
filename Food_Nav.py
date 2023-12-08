@@ -11,8 +11,7 @@ def request(url):
     r= s.get(url)
     r.html.render(sleep=1) #gives 1 second break after rendering - security measures can change accordingly 
     #print(r.status_code) #check if render gives you a status code, you may remove the hashtag to test if device can run
-    return r.html.xpath('//*[contains(@class,"search-results")]', first = True) #just in case other elements have same name first = True must be inside
-     #obtain xpath from inspect on chrome, use the xpath of search results --reminder to explain 
+    return r.html.xpath('//*[contains(@class,"search-results")]', first = True) 
 
 def parse(products):
     list_links = products.absolute_links
@@ -36,26 +35,40 @@ def parse(products):
         
 def output():
     df = pd.DataFrame(links_list)
-    df.to_csv(f'{file_name}.csv', index = False) #change file name accordingly, do not remove the .csv
+    df.to_csv(f'{file_name}.csv', index = False)
     print('Saved to CSV')
 
-def generate_search_link(search_terms, start_date = None, end_date = None):
+def generate_search_link(search_terms, website = 'all', start_date = None, end_date = None):
+    base_url = 'https://{website}.com/search?q={query}&t=all&p=1&sd={sd}&ed={ed}&ob=date&range_date=custom_dates'
+    websites = ['foodnavigator', 'foodnavigator-asia', 'foodnavigator-usa', 'foodnavigator-latam'] #For companies under Food Navigator, you may add on to the list
+    
+    if website == 'all':
+        links = {}
+        for site in websites:
+            links[site] = generate_link(base_url, site, search_terms, start_date, end_date)
+        print(links)
+        return links
+    else:
+        if website not in websites:
+            return "Invalid website choice"
+        return generate_link(base_url, website, search_terms, start_date, end_date)
+    
+def generate_link(base_url, website, search_terms, start_date = None, end_date = None):
+    query = "%20".join(search_terms)
+    
+    range_date = 'custom_dates' if start_date and end_date else 'all'
+    
     if start_date and end_date:
-        base_url = 'https://www.foodnavigator-asia.com/search?q={query}&t=all&p=1&sd={sd}&ed={ed}&ob=date&range_date=custom_dates'
         start_date = int(time.mktime(start_date.timetuple()))
         end_date = int(time.mktime(end_date.timetuple()))
-    else: 
-        base_url = 'https://www.foodnavigator-asia.com/search?q={query}&t=all&p=1&ob=date&range_date=all'
-    
-    query = "%20".join(search_terms)
-    if start_date and end_date: 
-        link = base_url.format(query = query, sd = start_date, ed = end_date)
+        link = base_url.format(website=website, query=query, sd=start_date, ed=end_date, range_date=range_date)
     else:
-        link = base_url.format(query = query)
+        link = base_url.format(website=website, query=query, range_date=range_date)
     print(link)
     return link
 
 search_terms = input("Enter the search terms separated by spaces: ").split()
+website_choice = input("Enter the website you want to crawl: ")
 start_date_input = input("Enter start date (YYYY-MM-DD 01:00): ")
 end_date_input = input("Enter end date (YYYY-MM-DD 01:00): ")
 pages = input("Enter Number of Pages you would like to search: ")
@@ -69,7 +82,7 @@ if start_date_input and end_date_input:
 
 while True:
     try:
-        products = request(generate_search_link(search_terms, start_date, end_date)) #insert the link that you want to view, shift the x accordingly 
+        products = request(generate_link(search_terms, website_choice, start_date, end_date)) #insert the link that you want to view, shift the x accordingly 
         print(f'Getting links from page {pages}')
         parse(products)
         print('Total Items: ', len(links_list))
